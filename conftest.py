@@ -22,3 +22,8 @@ def perfect_html(fixtures_dir):
 @pytest.fixture
 def minimal_html(fixtures_dir):
     return (fixtures_dir / "minimal_page.html").read_text()
+
+
+@pytest.fixture
+def aeo_html(fixtures_dir):
+    return (fixtures_dir / "aeo_optimized_page.html").read_text()

@@ -21,6 +21,7 @@ from tools import (
     js_render_auditor,
     structured_data_auditor,
     authority_auditor,
+    aeo_auditor,
 )
 from src.aggregator import aggregate
 from src.ai_analyzer import format_for_analysis
@@ -37,6 +38,7 @@ AUDIT_TOOLS = [
     js_render_auditor,
     structured_data_auditor,
     authority_auditor,
+    aeo_auditor,
 ]
 
 TMP_DIR = ".tmp"

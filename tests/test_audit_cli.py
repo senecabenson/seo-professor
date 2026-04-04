@@ -71,13 +71,13 @@ class TestExtractDomain:
 class TestAuditPage:
     @patch("src.audit.AUDIT_TOOLS")
     def test_audit_page_runs_all_tools(self, mock_tools):
-        tools = [MagicMock() for _ in range(9)]
+        tools = [MagicMock() for _ in range(10)]
         for i, t in enumerate(tools):
             t.audit.return_value = {"tool": f"tool_{i}", "url": "u", "score": 80, "issues": [], "data": {}}
         mock_tools.__iter__ = lambda self: iter(tools)
 
         results = audit_page("https://example.com", "<html></html>")
-        assert len(results) == 9
+        assert len(results) == 10
         for t in tools:
             t.audit.assert_called_once()
 
