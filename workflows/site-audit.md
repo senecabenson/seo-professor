@@ -1,7 +1,7 @@
 # Site Audit Workflow
 
 ## Objective
-Run a full SEO audit on a website: crawl pages, check technical SEO across 9 audit dimensions, aggregate results, get AI analysis, and generate a PDF report.
+Run a full SEO audit on a website: crawl pages, check technical SEO and AEO across 10 audit dimensions, aggregate results, get AI analysis, and generate a PDF report.
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ Crawls up to 50 pages via sitemap (falls back to spider), runs all audits, saves
 ```bash
 python -m src.audit https://example.com/page --single-page --no-db
 ```
-Fastest option. Fetches one page, runs all 9 audit tools, generates PDF locally.
+Fastest option. Fetches one page, runs all 10 audit tools, generates PDF locally.
 
 ### Limit Crawl Depth
 ```bash
@@ -65,7 +65,7 @@ Report saved locally to `.tmp/reports/<domain>-audit.pdf`.
 
 1. **Crawl** — Discovers pages via `/sitemap.xml` (preferred) or BFS spider fallback. Respects `robots.txt`. Returns URL, HTML, status code, and headers per page.
 
-2. **Audit** — Runs 9 tools on each page:
+2. **Audit** — Runs 10 tools on each page:
    | Tool | What It Checks |
    |------|---------------|
    | `onpage_auditor` | Title, meta description, H1, headings, canonical, OG/Twitter tags, word count |
@@ -77,6 +77,7 @@ Report saved locally to `.tmp/reports/<domain>-audit.pdf`.
    | `js_render_auditor` | SPA detection, empty root div, noscript fallback, script count |
    | `structured_data_auditor` | JSON-LD validation, schema.org types, AI bot governance |
    | `authority_auditor` | E-E-A-T signals: author, about/contact links, social profiles |
+   | `aeo_auditor` | AI search optimization: direct answer patterns, Q&A headings, citation signals (stats + sources), content freshness, llms.txt, trust bottleneck detection |
 
 3. **Aggregate** — Merges per-page results into site-wide metrics: overall score, severity counts, top issues, worst pages, per-tool summaries.
 
@@ -141,8 +142,10 @@ The script pauses after step 4 and waits for AI input:
 - **JS-heavy SPAs:** The `js_render_auditor` flags SPA patterns heuristically (empty root div, heavy JS). No headless browser in MVP — scores may be conservative.
 - **Rate limiting:** Crawler uses 1-second delay between requests. For aggressive sites, the crawl may be slow.
 - **Very large sites (100+ pages):** AI analyzer truncates to 10 worst pages for the prompt. Use `--max-pages` to limit crawl scope.
-- **No PageSpeed API key:** CWV auditor returns `score=None` with a "skipped" issue. Other 8 tools still run normally.
+- **No PageSpeed API key:** CWV auditor returns `score=None` with a "skipped" issue. Other 9 tools still run normally.
 - **No Supabase credentials:** Use `--no-db` flag. Report saves locally. History mode won't work.
+- **AEO auditor on thin content:** Pages with no H2/H3 headings skip the direct-answer and question-heading checks gracefully (ratio = 0.0, no issue flagged). The tool is most useful on content-heavy pages.
+- **Trust bottleneck false positives:** Words like "best" are only flagged when no statistic or data point appears in the same paragraph. Legitimate data-backed claims are not penalized.
 
 ---
 
@@ -156,6 +159,7 @@ The script pauses after step 4 and waits for AI input:
 | Crawler returns 0 pages | Check if robots.txt blocks the user agent, or site requires auth |
 | Score is 0 for all pages | Likely HTTP errors — check `status_code` in `.tmp/audit_data.json` |
 | `ai_analysis.json` parse error | Ensure valid JSON with required keys |
+| AEO score low on landing pages | Landing pages often lack Q&A structure — expected. Focus AEO optimization on blog/content pages |
 
 ---
 
