@@ -1,0 +1,289 @@
+/* SEO Audit Report Styles */
+
+@page {
+    size: A4;
+    margin: 2cm 1.5cm;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1f2937;
+}
+
+h1 {
+    font-size: 24pt;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4pt;
+}
+
+h2 {
+    font-size: 16pt;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 8pt;
+    padding-bottom: 4pt;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+h3 {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6pt;
+}
+
+p {
+    margin-bottom: 8pt;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 24pt;
+    padding-bottom: 16pt;
+    border-bottom: 3px solid #2563eb;
+}
+
+.header .subtitle {
+    font-size: 12pt;
+    color: #6b7280;
+    margin-bottom: 16pt;
+}
+
+.score-display {
+    font-size: 48pt;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.score-label {
+    font-size: 11pt;
+    color: #6b7280;
+    display: block;
+    margin-top: 4pt;
+}
+
+.meta-row {
+    margin-top: 12pt;
+}
+
+.meta-row table {
+    margin: 0 auto;
+}
+
+.meta-row td {
+    padding: 4pt 12pt;
+    text-align: center;
+}
+
+.meta-value {
+    font-size: 14pt;
+    font-weight: 700;
+}
+
+.meta-label {
+    font-size: 9pt;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+}
+
+/* Severity badges */
+.badge {
+    display: inline-block;
+    padding: 2pt 8pt;
+    border-radius: 10pt;
+    font-size: 9pt;
+    font-weight: 600;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+}
+
+.badge-critical { background-color: #dc2626; }
+.badge-high { background-color: #ea580c; }
+.badge-medium { background-color: #ca8a04; }
+.badge-low { background-color: #2563eb; }
+
+/* Sections */
+.section {
+    margin-bottom: 20pt;
+}
+
+.section-break {
+    page-break-before: always;
+}
+
+/* Executive summary */
+.executive-summary p {
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #374151;
+}
+
+/* Priority fixes */
+.priority-list {
+    list-style: none;
+    padding: 0;
+}
+
+.priority-list li {
+    padding: 8pt 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.priority-list .issue-title {
+    font-weight: 600;
+    font-size: 11pt;
+}
+
+.priority-list .issue-desc {
+    font-size: 10pt;
+    color: #6b7280;
+    margin-top: 2pt;
+}
+
+.effort-badge, .impact-badge {
+    display: inline-block;
+    padding: 1pt 6pt;
+    border-radius: 6pt;
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 4pt;
+}
+
+.effort-badge {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.impact-badge {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+/* Tables */
+table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    font-size: 10pt;
+}
+
+table.data-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    text-align: left;
+    padding: 6pt 8pt;
+    border-bottom: 2px solid #e5e7eb;
+    color: #374151;
+}
+
+table.data-table td {
+    padding: 6pt 8pt;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+table.data-table tr:nth-child(even) td {
+    background-color: #f9fafb;
+}
+
+table.data-table .score-cell {
+    font-weight: 700;
+    text-align: center;
+    width: 60pt;
+}
+
+table.data-table .count-cell {
+    text-align: center;
+    width: 60pt;
+}
+
+/* Category cards */
+.category-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 6pt;
+    padding: 10pt 12pt;
+    margin-bottom: 10pt;
+}
+
+.category-card h3 {
+    margin-bottom: 4pt;
+}
+
+.category-card .assessment {
+    font-size: 10pt;
+    color: #6b7280;
+    margin-bottom: 4pt;
+}
+
+.category-card .key-issues {
+    font-size: 10pt;
+    padding-left: 16pt;
+}
+
+.category-card .key-issues li {
+    margin-bottom: 2pt;
+}
+
+/* Recommendations */
+.recommendations-list {
+    list-style: none;
+    padding: 0;
+    counter-reset: rec-counter;
+}
+
+.recommendations-list li {
+    counter-increment: rec-counter;
+    padding: 8pt 0 8pt 28pt;
+    border-bottom: 1px solid #f3f4f6;
+    position: relative;
+}
+
+.recommendations-list li::before {
+    content: counter(rec-counter);
+    position: absolute;
+    left: 0;
+    top: 8pt;
+    width: 20pt;
+    height: 20pt;
+    background-color: #2563eb;
+    color: #ffffff;
+    font-size: 9pt;
+    font-weight: 700;
+    text-align: center;
+    line-height: 20pt;
+    border-radius: 50%;
+}
+
+.rec-action {
+    font-weight: 600;
+    font-size: 11pt;
+}
+
+.rec-rationale {
+    font-size: 10pt;
+    color: #6b7280;
+    margin-top: 2pt;
+}
+
+/* Footer */
+.footer {
+    margin-top: 24pt;
+    padding-top: 8pt;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 9pt;
+    color: #9ca3af;
+}

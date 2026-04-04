@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SEO Audit Report — {{ domain }}</title>
+    <link rel="stylesheet" href="report.css">
+</head>
+<body>
+
+    <!-- Section 1: Header -->
+    <div class="header">
+        <h1>SEO Audit Report</h1>
+        <p class="subtitle">{{ domain }} &mdash; {{ date }}</p>
+        <div class="score-display" style="color: {{ score_color }};">{{ site_score }}<span style="font-size: 18pt; color: #9ca3af;">/100</span></div>
+        <span class="score-label">Overall Site Score</span>
+        <div class="meta-row">
+            <table>
+                <tr>
+                    <td>
+                        <div class="meta-value">{{ pages_audited }}</div>
+                        <div class="meta-label">Pages Audited</div>
+                    </td>
+                    {% for sev, count in severity_counts.items() %}
+                    <td>
+                        <div class="meta-value">{{ count }}</div>
+                        <div class="meta-label"><span class="badge badge-{{ sev }}">{{ sev }}</span></div>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section 2: Executive Summary -->
+    <div class="section executive-summary">
+        <h2>Executive Summary</h2>
+        {% if executive_summary %}
+        <p>{{ executive_summary }}</p>
+        {% else %}
+        <p>No executive summary available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 3: Top Priority Fixes -->
+    <div class="section">
+        <h2>Top Priority Fixes</h2>
+        {% if priority_fixes %}
+        <ol class="priority-list">
+            {% for fix in priority_fixes %}
+            <li>
+                <span class="issue-title">{{ fix.issue }}</span>
+                {% if fix.effort %}<span class="effort-badge">Effort: {{ fix.effort }}</span>{% endif %}
+                {% if fix.impact %}<span class="impact-badge">Impact: {{ fix.impact }}</span>{% endif %}
+                {% if fix.description %}<div class="issue-desc">{{ fix.description }}</div>{% endif %}
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p>No priority fixes identified.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 4: Detailed Findings by Category -->
+    <div class="section section-break">
+        <h2>Detailed Findings by Category</h2>
+        {% if tool_summaries %}
+        {% for tool_name, summary in tool_summaries.items() %}
+        <div class="category-card">
+            <h3>{{ tool_name | replace("_", " ") | title }}</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Avg Score</th>
+                    <th>Issues Found</th>
+                </tr>
+                <tr>
+                    <td class="score-cell" style="color: {{ summary.avg_score | score_color }};">{{ summary.avg_score }}</td>
+                    <td class="count-cell">{{ summary.issue_count }}</td>
+                </tr>
+            </table>
+            {% if tool_name in category_analysis %}
+            <p class="assessment">{{ category_analysis[tool_name].assessment }}</p>
+            {% if category_analysis[tool_name].key_issues %}
+            <ul class="key-issues">
+                {% for ki in category_analysis[tool_name].key_issues %}
+                <li>{{ ki }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <p>No tool summaries available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 5: Page-by-Page Breakdown -->
+    <div class="section section-break">
+        <h2>Page-by-Page Breakdown</h2>
+        {% if pages %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Score</th>
+                    <th>Issues</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for url, data in pages | dictsort %}
+                <tr>
+                    <td>{{ url }}</td>
+                    <td class="score-cell" style="color: {{ data.score | score_color }};">{{ data.score }}</td>
+                    <td class="count-cell">{{ data.issue_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No page data available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Section 6: Recommendations -->
+    <div class="section section-break">
+        <h2>Recommendations</h2>
+        {% if recommendations %}
+        <ul class="recommendations-list">
+            {% for rec in recommendations %}
+            <li>
+                <div class="rec-action">{{ rec.action }}</div>
+                {% if rec.rationale %}<div class="rec-rationale">{{ rec.rationale }}</div>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No recommendations available.</p>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        <p>Generated by SEO Professor &mdash; {{ date }}</p>
+    </div>
+
+</body>
+</html>
