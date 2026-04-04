@@ -17,3 +17,13 @@ def perfect_html():
 @pytest.fixture
 def minimal_html():
     return (FIXTURES_DIR / "minimal_page.html").read_text()
+
+
+@pytest.fixture
+def schema_html():
+    return (FIXTURES_DIR / "page_with_schema.html").read_text()
+
+
+@pytest.fixture
+def eeat_html():
+    return (FIXTURES_DIR / "page_with_eeat.html").read_text()
