@@ -10,6 +10,7 @@ dependencies = [
     "weasyprint>=62",
     "lxml>=5.0",
     "jinja2>=3.1",
+    "anthropic>=0.40",
 ]
 
 [project.optional-dependencies]
