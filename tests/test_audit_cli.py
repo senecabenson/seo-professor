@@ -200,7 +200,7 @@ class TestMainPipeline:
         }
 
     @patch("src.audit.generate_report")
-    @patch("src.audit.wait_for_analysis", return_value=_default_analysis())
+    @patch("src.audit.load_analysis_if_ready", return_value=_default_analysis())
     @patch("src.audit.format_for_analysis", return_value={"prompt": "test", "structured_input": {}})
     @patch("src.audit.asyncio")
     def test_main_full_pipeline_no_db(self, mock_asyncio, mock_fmt, mock_wait, mock_gen, tmp_path):
@@ -216,7 +216,7 @@ class TestMainPipeline:
     @patch("src.audit.upload_report", return_value="https://cdn.example.com/report.pdf")
     @patch("src.audit.db")
     @patch("src.audit.generate_report")
-    @patch("src.audit.wait_for_analysis", return_value=_default_analysis())
+    @patch("src.audit.load_analysis_if_ready", return_value=_default_analysis())
     @patch("src.audit.format_for_analysis", return_value={"prompt": "test", "structured_input": {}})
     @patch("src.audit.asyncio")
     def test_main_full_pipeline_with_db(self, mock_asyncio, mock_fmt, mock_wait,

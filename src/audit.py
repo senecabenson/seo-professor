@@ -24,7 +24,7 @@ from tools import (
     aeo_auditor,
 )
 from src.aggregator import aggregate
-from src.ai_analyzer import format_for_analysis
+from src.ai_analyzer import format_for_analysis, analyze_with_claude
 from src.report_generator import generate_report, upload_report
 from src import db
 
@@ -117,25 +117,30 @@ def save_audit_data(aggregated: dict, analysis_result: dict, domain: str):
         json.dump({"aggregated": aggregated, "analysis": analysis_result}, f, indent=2)
 
 
-def wait_for_analysis() -> dict:
-    """Wait for AI analysis file. Interactive prompt."""
-    print("\n" + "=" * 60)
-    print("AUDIT DATA SAVED — AI ANALYSIS NEEDED")
-    print("=" * 60)
-    print(f"\nAudit data saved to: {AUDIT_DATA_PATH}")
-    print(f"\nPlease provide your AI analysis as JSON at:")
-    print(f"  {AI_ANALYSIS_PATH}")
-    print(f"\nRequired JSON keys: executive_summary, priority_fixes,")
-    print(f"  category_analysis, recommendations")
-    print("=" * 60)
-    input("\nPress Enter when ai_analysis.json is ready (or Ctrl+C to skip)...")
+def load_analysis_if_ready() -> dict:
+    """Load AI analysis using the best available source — in priority order:
 
-    if not os.path.exists(AI_ANALYSIS_PATH):
-        print("No analysis file found. Generating report without AI analysis.")
-        return _default_analysis()
+    1. ANTHROPIC_API_KEY is set → call Claude API directly (automated/Trigger.dev mode)
+    2. .tmp/ai_analysis.json exists → load it (Claude Code in-session mode:
+       Claude Code analyzed the audit data and wrote this file)
+    3. Neither → return default analysis (report still generates, no AI summary)
 
-    with open(AI_ANALYSIS_PATH) as f:
-        return json.load(f)
+    When running locally through Claude Code: do NOT set ANTHROPIC_API_KEY.
+    Claude Code handles the analysis step in-session.
+    """
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if api_key:
+        if os.path.exists(AUDIT_DATA_PATH):
+            with open(AUDIT_DATA_PATH) as f:
+                data = json.load(f)
+            prompt = data.get("analysis", {}).get("prompt", "")
+            if prompt:
+                print("Running AI analysis via Claude API...")
+                return analyze_with_claude(prompt, api_key)
+    if os.path.exists(AI_ANALYSIS_PATH):
+        with open(AI_ANALYSIS_PATH) as f:
+            return json.load(f)
+    return _default_analysis()
 
 
 def _default_analysis() -> dict:
@@ -227,14 +232,16 @@ def main(args=None):
     analysis_result = format_for_analysis(aggregated, domain)
     print("\n" + analysis_result["prompt"])
 
-    # Step 3: Save data and wait for AI analysis
+    # Step 3: Save audit data, load AI analysis from best available source
     save_audit_data(aggregated, analysis_result, domain)
+    ai_analysis = load_analysis_if_ready()
 
-    try:
-        ai_analysis = wait_for_analysis()
-    except KeyboardInterrupt:
-        print("\nSkipping AI analysis.")
-        ai_analysis = _default_analysis()
+    if ai_analysis == _default_analysis():
+        print(
+            f"\nNo AI analysis available. Report will be generated without AI summary.\n"
+            f"  • Automated mode: set ANTHROPIC_API_KEY in your environment\n"
+            f"  • Claude Code mode: analyze in-session and write {AI_ANALYSIS_PATH}"
+        )
 
     # Step 4: Generate report
     if parsed.output:
