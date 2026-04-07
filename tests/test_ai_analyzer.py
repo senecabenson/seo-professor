@@ -1,5 +1,6 @@
 """Tests for the AI analysis data formatter."""
 import json
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -117,3 +118,63 @@ class TestEdgeCases:
         assert "structured_input" in out
         assert isinstance(out["prompt"], str)
         assert len(out["prompt"]) > 0
+
+
+class TestAnalyzeWithClaude:
+    def test_returns_required_keys(self):
+        """analyze_with_claude() returns dict with all 4 required keys."""
+        fake_response = {
+            "executive_summary": "Site has moderate SEO issues.",
+            "priority_fixes": [{"issue": "missing titles", "effort": "low", "impact": "high", "description": "Add titles"}],
+            "category_analysis": {"onpage_auditor": {"score": 60, "assessment": "needs work", "key_issues": ["no titles"]}},
+            "recommendations": [{"action": "Add page titles", "priority": 1, "rationale": "Direct ranking factor"}],
+        }
+        mock_message = MagicMock()
+        mock_message.content = [MagicMock(text=json.dumps(fake_response))]
+
+        with patch("src.ai_analyzer.anthropic.Anthropic") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+            mock_client.messages.create.return_value = mock_message
+
+            from src.ai_analyzer import analyze_with_claude
+            result = analyze_with_claude("test prompt", api_key="sk-ant-fake")
+
+        assert "executive_summary" in result
+        assert "priority_fixes" in result
+        assert "category_analysis" in result
+        assert "recommendations" in result
+
+    def test_falls_back_on_invalid_json(self):
+        """analyze_with_claude() returns default analysis if Claude returns non-JSON."""
+        mock_message = MagicMock()
+        mock_message.content = [MagicMock(text="Sorry, I cannot help with that.")]
+
+        with patch("src.ai_analyzer.anthropic.Anthropic") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+            mock_client.messages.create.return_value = mock_message
+
+            from src.ai_analyzer import analyze_with_claude
+            result = analyze_with_claude("test prompt", api_key="sk-ant-fake")
+
+        assert "executive_summary" in result
+        assert isinstance(result["priority_fixes"], list)
+        assert isinstance(result["recommendations"], list)
+
+    def test_strips_json_code_fences(self):
+        """analyze_with_claude() handles responses wrapped in ```json fences."""
+        fake_response = {"executive_summary": "Good site.", "priority_fixes": [], "category_analysis": {}, "recommendations": []}
+        fenced = f"```json\n{json.dumps(fake_response)}\n```"
+        mock_message = MagicMock()
+        mock_message.content = [MagicMock(text=fenced)]
+
+        with patch("src.ai_analyzer.anthropic.Anthropic") as mock_client_class:
+            mock_client = MagicMock()
+            mock_client_class.return_value = mock_client
+            mock_client.messages.create.return_value = mock_message
+
+            from src.ai_analyzer import analyze_with_claude
+            result = analyze_with_claude("test prompt", api_key="sk-ant-fake")
+
+        assert result["executive_summary"] == "Good site."

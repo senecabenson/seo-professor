@@ -4,6 +4,8 @@ This module does NOT call the Claude API. It prepares the data and prompt
 so Claude can analyze it in-session.
 """
 import copy
+import json
+import anthropic
 
 
 def _build_prompt(data: dict, domain: str) -> str:
@@ -126,3 +128,41 @@ def format_for_analysis(aggregated_data: dict, domain: str) -> dict:
         "prompt": _build_prompt(aggregated_data, domain),
         "structured_input": _build_structured_input(aggregated_data),
     }
+
+
+def analyze_with_claude(prompt: str, api_key: str) -> dict:
+    """Call the Claude API with the audit prompt and return structured analysis.
+
+    Used in automated mode (e.g. Trigger.dev) when ANTHROPIC_API_KEY is set.
+    When running locally through Claude Code, skip this — Claude Code handles
+    analysis in-session and writes .tmp/ai_analysis.json directly.
+
+    Args:
+        prompt: The formatted audit prompt from _build_prompt().
+        api_key: Anthropic API key.
+
+    Returns:
+        Dict with keys: executive_summary, priority_fixes, category_analysis, recommendations.
+        Falls back to a default analysis dict if the response cannot be parsed.
+    """
+    client = anthropic.Anthropic(api_key=api_key)
+    message = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    raw = message.content[0].text
+
+    # Strip ```json ... ``` fences if present
+    if raw.strip().startswith("```"):
+        raw = raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return {
+            "executive_summary": "AI analysis could not be parsed. Review audit data manually.",
+            "priority_fixes": [],
+            "category_analysis": {},
+            "recommendations": [],
+        }
