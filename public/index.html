@@ -889,7 +889,7 @@
     // Trigger.dev status → progress step mapping
     // EXECUTING is generic; we use the task's logger output but can't easily
     // distinguish sub-steps from the runs API, so we animate through phases.
-    const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'CANCELED', 'TIMED_OUT', 'CRASHED']);
+    const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'CANCELED', 'TIMED_OUT', 'CRASHED', 'SYSTEM_FAILURE', 'EXPIRED']);
 
     // ─── Utilities ──────────────────────────────────────
     function scoreClass(score) {
@@ -987,7 +987,7 @@
             setActiveStep(EXECUTING_STEPS[executingPhase]);
             const msgs = ['Crawling and auditing pages…', 'Running AI analysis…', 'Generating PDF report…'];
             document.getElementById('progress-msg').textContent = msgs[executingPhase] || 'Working…';
-          } else if (status === 'QUEUED' || status === 'WAITING_FOR_DEPLOY') {
+          } else if (status === 'QUEUED' || status === 'DEQUEUED' || status === 'PENDING_VERSION' || status === 'WAITING_FOR_DEPLOY') {
             setActiveStep('QUEUED');
             document.getElementById('progress-msg').textContent = 'Waiting for worker…';
           }
