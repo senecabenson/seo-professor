@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import jinja2
 import weasyprint
 
+from src.ai_analyzer import ISSUE_LABELS
 from src.db import get_client
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -67,6 +68,7 @@ def _render_html(aggregated_data: dict, ai_analysis: dict) -> str:
         "worst_pages": aggregated_data.get("worst_pages", []),
         "tool_summaries": aggregated_data.get("tool_summaries", {}),
         "pages": aggregated_data.get("pages", {}),
+        "issue_labels": ISSUE_LABELS,
     }
     return template.render(**context)
 
@@ -88,6 +90,12 @@ def generate_report(
     """
     html_string = _render_html(aggregated_data, ai_analysis)
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+
+    # Save HTML preview alongside PDF (useful for VSCode preview)
+    preview_path = os.path.join(os.path.dirname(os.path.dirname(output_path)), "report_preview.html")
+    with open(preview_path, "w") as f:
+        f.write(html_string)
+
     weasyprint.HTML(
         string=html_string, base_url=str(TEMPLATES_DIR)
     ).write_pdf(output_path)

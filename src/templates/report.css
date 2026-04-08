@@ -278,6 +278,104 @@ table.data-table .count-cell {
     margin-top: 2pt;
 }
 
+/* Score explanation block */
+.score-explanation {
+    margin: 12pt 0 20pt 0;
+    padding: 12pt 14pt;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6pt;
+}
+
+.score-ranges-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 4pt;
+    margin-bottom: 10pt;
+}
+
+.score-range-cell {
+    width: 25%;
+    text-align: center;
+    padding: 6pt 4pt;
+    border-top: 3px solid #e5e7eb;
+    background-color: #ffffff;
+    font-size: 9pt;
+    line-height: 1.5;
+    opacity: 0.4;
+    border-radius: 3pt;
+}
+
+.score-range-cell.score-range-active {
+    opacity: 1;
+    background-color: #ffffff;
+}
+
+.score-how {
+    font-size: 9.5pt;
+    color: #4b5563;
+    margin-bottom: 8pt;
+}
+
+.score-chips-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 3pt;
+}
+
+.score-chip-cell {
+    text-align: center;
+    padding: 4pt 2pt;
+    border: 1px solid;
+    border-radius: 4pt;
+    font-size: 8pt;
+    line-height: 1.4;
+}
+
+.chip-score {
+    font-weight: 700;
+    font-size: 10pt;
+}
+
+.chip-label {
+    font-size: 7pt;
+    color: #6b7280;
+}
+
+/* Table footnote */
+.table-footnote {
+    font-size: 8.5pt;
+    color: #9ca3af;
+    margin-top: 4pt;
+    font-style: italic;
+}
+
+/* Issue glossary table (plain-language labels) */
+.issues-glossary-table td {
+    vertical-align: top;
+}
+
+.issue-plain-label {
+    font-weight: 600;
+    font-size: 10pt;
+    display: block;
+    color: #1f2937;
+}
+
+.issue-type-code {
+    font-size: 8pt;
+    color: #9ca3af;
+    font-family: "Courier New", Courier, monospace;
+    display: block;
+    margin-top: 1pt;
+}
+
+.issue-explain {
+    font-size: 9pt;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
 /* Footer */
 .footer {
     margin-top: 24pt;

@@ -41,5 +41,5 @@ TBD — integrations will be added incrementally:
 - [x] .env file created with placeholder keys
 - [x] .gitignore configured
 - [x] Git repository initialized
-- [x] SEO skills installed (seo-audit, seo-optimizer)
+- [x] SEO skills installed (site-auditor, site-remediator)
 - [x] First capability scoped and ready to build

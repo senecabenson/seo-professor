@@ -11,6 +11,13 @@ dependencies = [
     "lxml>=5.0",
     "jinja2>=3.1",
     "anthropic>=0.40",
+    "python-dotenv>=1.0",
+    # Trigger.dev Python SDK — install: pip install trigger.dev
+    # (PyPI package name: check https://trigger.dev/docs/sdk/python)
+    "trigger-dev>=3.0",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +29,7 @@ dev = [
 
 [project.scripts]
 seo-audit = "src.audit:main"
+seo-web   = "src.web:start"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

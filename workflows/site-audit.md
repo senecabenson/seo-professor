@@ -81,41 +81,72 @@ Report saved locally to `.tmp/reports/<domain>-audit.pdf`.
 
 3. **Aggregate** — Merges per-page results into site-wide metrics: overall score, severity counts, top issues, worst pages, per-tool summaries.
 
-4. **AI Analysis** — Formats data as a prompt, saves to `.tmp/audit_data.json`, prints prompt to stdout. Waits for `.tmp/ai_analysis.json` with Claude's analysis.
+4. **AI Analysis** — Formats data as a prompt, saves to `.tmp/audit_data.json`, prints prompt to stdout. Runs analysis automatically via three-mode priority (see below).
 
-5. **Report** — Generates PDF via Jinja2 + WeasyPrint with 6 sections: header, executive summary, priority fixes, detailed findings, page-by-page table, recommendations.
+5. **Report** — Generates PDF + HTML preview via Jinja2 + WeasyPrint. Also saves `.tmp/report_preview.html` for VSCode preview. The report has 8 sections in this exact order:
+
+   | # | Section | Contents |
+   |---|---------|----------|
+   | 1 | **Header** | Score (color-coded), pages audited, issue severity counts |
+   | 2 | **Score Explanation** | Color-coded range indicator (which band the site falls in), "how is this calculated" paragraph, per-category score chips with human-readable names |
+   | 3 | **Executive Summary** | 3–5 sentence plain-English overview written at 9th grade reading level |
+   | 4 | **Most Common Issues** | Table of top issues with plain-English label, why-it-matters explanation, "Times Found*" count, severity badge. Footnote explains count = instances, not unique pages |
+   | 5 | **Top Priority Fixes** | Ranked list with plain-English issue name, effort/impact badges, full description with real-world consequences and time-to-fix estimates |
+   | 6 | **Detailed Findings by Category** | One card per audit tool: score, plain-English assessment, key issue bullets |
+   | 7 | **Page-by-Page Breakdown** | Table of all audited pages with score and issue count |
+   | 8 | **Recommendations** | Numbered action plan with plain-English rationale |
+
+   **Report regeneration without re-crawling:**
+   ```python
+   python -c "
+   import json; from src.report_generator import generate_report
+   data = json.load(open('.tmp/audit_data.json')); analysis = json.load(open('.tmp/ai_analysis.json'))
+   generate_report(data['aggregated'], analysis, '.tmp/reports/<domain>-audit.pdf')
+   "
+   ```
 
 6. **Store** — Uploads PDF to Supabase Storage, saves audit run and findings to Postgres (unless `--no-db`).
 
 ---
 
-## AI Analysis Step (MVP Flow)
+## AI Analysis Step
 
-The script pauses after step 4 and waits for AI input:
+The pipeline runs analysis automatically — no manual steps. Priority order:
 
-1. Script prints the analysis prompt to stdout
-2. Script saves data to `.tmp/audit_data.json`
-3. Script prompts: "Press Enter when ai_analysis.json is ready"
-4. You (or Claude in-session) write analysis to `.tmp/ai_analysis.json`
-5. Press Enter to continue to report generation
+1. **`ANTHROPIC_API_KEY` is set** → calls Claude API directly (automated/Trigger.dev mode)
+2. **`.tmp/ai_analysis.json` exists** → loads it (Claude Code in-session mode: Claude writes this file after reading the printed prompt)
+3. **Neither** → uses default analysis, PDF still generates with raw audit data
+
+**Claude Code in-session workflow:**
+1. Run `python -m src.audit https://example.com --no-db`
+2. Script prints the analysis prompt to stdout and saves `.tmp/audit_data.json`
+3. Claude Code reads the prompt, analyzes the data, writes `.tmp/ai_analysis.json`
+4. Re-run the command — it picks up the JSON and generates the full PDF
+
+**Writing style requirements for all fields in `ai_analysis.json`:**
+- Write at a **9th grade reading level** — the audience is the site owner, not an SEO expert
+- **Define technical terms inline** the first time they appear: `LCP (how fast your main content appears on screen)`
+- **Frame every issue as a real consequence**: "This slows your page, causing visitors to leave before booking"
+- Use **"you / your site / your visitors"** — not passive voice
+- Terms that must always be defined when used: LCP, CLS, TBT, CWV, JSON-LD, canonical, structured data, E-E-A-T, AEO, hreflang, noindex, robots.txt, meta description, schema, HTTPS, CSP, HSTS, alt text, anchor text
 
 **Expected JSON structure for `.tmp/ai_analysis.json`:**
 ```json
 {
-  "executive_summary": "3-5 sentences summarizing SEO health",
+  "executive_summary": "3-5 sentences at 9th grade reading level; define technical terms inline",
   "priority_fixes": [
-    {"issue": "str", "effort": "low|medium|high", "impact": "low|medium|high", "description": "str"}
+    {"issue": "str", "effort": "low|medium|high", "impact": "low|medium|high", "description": "plain-English explanation with real-world consequences"}
   ],
   "category_analysis": {
-    "tool_name": {"score": 85, "assessment": "str", "key_issues": ["str"]}
+    "tool_name": {"score": 85, "assessment": "plain-English assessment readable by non-technical owner", "key_issues": ["str"]}
   },
   "recommendations": [
-    {"action": "str", "priority": 1, "rationale": "str"}
+    {"action": "str", "priority": 1, "rationale": "plain-English explanation of why this matters"}
   ]
 }
 ```
 
-**Skip AI analysis:** Press Ctrl+C during the wait to generate the report with a placeholder summary.
+**Issue type glossary:** All 72 snake_case issue types (e.g. `poor_lcp`, `missing_canonical`) are mapped to plain-English labels and one-sentence explanations in `src/ai_analyzer.ISSUE_LABELS`. The report template automatically displays these in the "Most Common Issues" section. To add a new issue type, add an entry to that dict.
 
 ---
 
@@ -158,7 +189,7 @@ The script pauses after step 4 and waits for AI input:
 | `SUPABASE_URL must be set` | Add credentials to `.env` or use `--no-db` |
 | Crawler returns 0 pages | Check if robots.txt blocks the user agent, or site requires auth |
 | Score is 0 for all pages | Likely HTTP errors — check `status_code` in `.tmp/audit_data.json` |
-| `ai_analysis.json` parse error | Ensure valid JSON with required keys |
+| `ai_analysis.json` parse error | Ensure valid JSON with required keys; delete the file to fall back to default analysis |
 | AEO score low on landing pages | Landing pages often lack Q&A structure — expected. Focus AEO optimization on blog/content pages |
 
 ---

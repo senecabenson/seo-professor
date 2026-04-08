@@ -1,0 +1,9 @@
+{
+  "name": "seo-professor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@trigger.dev/sdk": "^3.0.0"
+  }
+}

@@ -6,9 +6,13 @@ import hashlib
 import json
 import os
 import sys
+from collections.abc import Callable
 from urllib.parse import urlparse
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from tools import (
     crawler,
@@ -85,13 +89,21 @@ def audit_page(url: str, html: str, headers: dict | None = None) -> list[dict]:
     return results
 
 
-async def run_audit(url: str, single_page: bool = False, max_pages: int = 50) -> dict:
+async def run_audit(
+    url: str,
+    single_page: bool = False,
+    max_pages: int = 50,
+    progress_callback: Callable | None = None,
+) -> dict:
     """
     Run the full audit pipeline:
     1. Crawl (or fetch single page)
     2. Run all audit tools on each page
     3. Aggregate results
     Returns dict with 'aggregated' and 'pages' keys.
+
+    progress_callback(n: int) is called after each page is audited.
+    Used by web/Trigger.dev mode to report live progress. CLI passes None.
     """
     if single_page:
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
@@ -105,6 +117,8 @@ async def run_audit(url: str, single_page: bool = False, max_pages: int = 50) ->
     for page in pages:
         page_results = audit_page(page["url"], page["html"], page.get("headers"))
         all_results[page["url"]] = page_results
+        if progress_callback:
+            progress_callback(len(all_results))
 
     aggregated = aggregate(all_results)
     return {"aggregated": aggregated, "pages": pages}
