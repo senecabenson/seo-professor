@@ -12,7 +12,7 @@
  *   { domain, pdf_url, aggregated, ai_analysis }
  */
 
-const { runs } = require("@trigger.dev/sdk/v3");
+const { runs } = require("@trigger.dev/sdk");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "GET") {

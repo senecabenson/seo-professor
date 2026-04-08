@@ -7,7 +7,7 @@
  * The client polls /api/status/:runId to track progress.
  */
 
-const { tasks } = require("@trigger.dev/sdk/v3");
+const { tasks } = require("@trigger.dev/sdk");
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
