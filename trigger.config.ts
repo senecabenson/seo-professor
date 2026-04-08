@@ -6,6 +6,7 @@ export default defineConfig({
   build: {
     dockerfile: "Dockerfile.trigger",
   },
+  maxDuration: 3600,
   retries: {
     enabledInDev: false,
     default: {
