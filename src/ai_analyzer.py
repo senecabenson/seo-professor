@@ -299,10 +299,11 @@ ISSUE_LABELS: dict[str, dict[str, str]] = {
 }
 
 
-def _build_prompt(data: dict, domain: str) -> str:
+def _build_prompt(data: dict, domain: str, business_context: dict | None = None) -> str:
     """Build a structured analysis prompt from aggregated audit data."""
     sev = data.get("severity_counts", {})
     total_issues = sum(sev.values())
+    business_context = business_context or {}
 
     lines = [
         "# SEO Audit Analysis Request",
@@ -316,6 +317,27 @@ def _build_prompt(data: dict, domain: str) -> str:
         f"{sev.get('medium', 0)} medium, {sev.get('low', 0)} low)",
         "",
     ]
+
+    # Business context (if provided)
+    if business_context:
+        lines.append("## Business Context")
+        if business_context.get("business_type"):
+            lines.append(f"- Business Type: {business_context['business_type']}")
+        if business_context.get("locations"):
+            lines.append(f"- Target Location(s): {', '.join(business_context['locations'])}")
+        if business_context.get("target_keywords"):
+            lines.append("- Target Keywords:")
+            for kw in business_context["target_keywords"]:
+                lines.append(f"  - {kw}")
+        lines.extend([
+            "",
+            "Use this business context to:",
+            "1. Evaluate whether the site's content, titles, and meta descriptions reflect the business type and locations.",
+            "2. Cross-reference target keywords against GSC data (if present) to identify ranking gaps.",
+            "3. Recommend location-specific pages that should exist but don't (e.g. '/san-diego-photo-booth-rental/').",
+            "4. Flag pages that mention the wrong city, wrong service, or miss key local keywords.",
+            "",
+        ])
 
     # Top issues
     top_issues = data.get("top_issues", [])
@@ -421,18 +443,19 @@ def _build_structured_input(data: dict) -> dict:
     return result
 
 
-def format_for_analysis(aggregated_data: dict, domain: str) -> dict:
+def format_for_analysis(aggregated_data: dict, domain: str, business_context: dict | None = None) -> dict:
     """Format aggregated audit data into a prompt and structured input for Claude.
 
     Args:
         aggregated_data: Output from src.aggregator.aggregate().
         domain: The domain being audited.
+        business_context: Optional dict with business_type, locations, target_keywords.
 
     Returns:
         Dict with "prompt" (str) and "structured_input" (dict).
     """
     return {
-        "prompt": _build_prompt(aggregated_data, domain),
+        "prompt": _build_prompt(aggregated_data, domain, business_context or {}),
         "structured_input": _build_structured_input(aggregated_data),
     }
 

@@ -26,6 +26,8 @@ from tools import (
     structured_data_auditor,
     authority_auditor,
     aeo_auditor,
+    gsc_auditor,
+    ga_auditor,
 )
 from src.aggregator import aggregate
 from src.ai_analyzer import format_for_analysis, analyze_with_claude
@@ -43,12 +45,46 @@ AUDIT_TOOLS = [
     structured_data_auditor,
     authority_auditor,
     aeo_auditor,
+    gsc_auditor,
+    ga_auditor,
 ]
 
 TMP_DIR = ".tmp"
 AUDIT_DATA_PATH = os.path.join(TMP_DIR, "audit_data.json")
 AI_ANALYSIS_PATH = os.path.join(TMP_DIR, "ai_analysis.json")
 DEFAULT_OUTPUT_DIR = os.path.join(TMP_DIR, "reports")
+
+
+def build_google_clients() -> dict:
+    """Build Google Search Console and GA4 API clients from env credentials.
+
+    Returns a dict with gsc_service, ga_client, and ga4_property_id.
+    All values are None if GOOGLE_SERVICE_ACCOUNT_JSON is not set.
+    """
+    creds_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    ga4_property_id = os.environ.get("GA4_PROPERTY_ID")
+    if not creds_json:
+        return {"gsc_service": None, "ga_client": None, "ga4_property_id": None}
+    try:
+        import json as _json
+        from google.oauth2.service_account import Credentials
+        from googleapiclient.discovery import build
+        from google.analytics.data_v1beta import BetaAnalyticsDataClient
+
+        creds_data = _json.loads(creds_json)
+        creds = Credentials.from_service_account_info(
+            creds_data,
+            scopes=[
+                "https://www.googleapis.com/auth/webmasters.readonly",
+                "https://www.googleapis.com/auth/analytics.readonly",
+            ],
+        )
+        gsc_service = build("searchconsole", "v1", credentials=creds)
+        ga_client = BetaAnalyticsDataClient(credentials=creds)
+        return {"gsc_service": gsc_service, "ga_client": ga_client, "ga4_property_id": ga4_property_id}
+    except Exception as exc:
+        print(f"Warning: Could not initialize Google API clients: {exc}")
+        return {"gsc_service": None, "ga_client": None, "ga4_property_id": None}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -59,6 +95,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-pages", type=int, default=50, help="Maximum pages to crawl (default: 50)")
     parser.add_argument("--output", help="Custom output path for PDF report")
     parser.add_argument("--no-db", action="store_true", help="Skip Supabase storage")
+    # Business context flags for keyword-aware AI analysis
+    parser.add_argument("--business-type", metavar="TYPE", help='Industry/business type (e.g. "photo booth rental")')
+    parser.add_argument("--location", metavar="LOCATION", action="append", dest="locations",
+                        help="Location(s) served — can be repeated for multiple markets")
+    parser.add_argument("--keyword", metavar="KEYWORD", action="append", dest="target_keywords",
+                        help="Target keyword(s) — can be repeated")
     return parser
 
 
@@ -79,12 +121,14 @@ def extract_domain(url: str) -> str:
     return urlparse(url).netloc
 
 
-def audit_page(url: str, html: str, headers: dict | None = None) -> list[dict]:
+def audit_page(url: str, html: str, headers: dict | None = None, config: dict | None = None) -> list[dict]:
     """Run all audit tools on a single page. Returns list of AuditResult dicts."""
+    full_config = {"headers": headers or {}}
+    if config:
+        full_config.update(config)
     results = []
-    config = {"headers": headers or {}}
     for tool in AUDIT_TOOLS:
-        result = tool.audit(url, html, config=config)
+        result = tool.audit(url, html, config=full_config)
         results.append(result)
     return results
 
@@ -94,17 +138,26 @@ async def run_audit(
     single_page: bool = False,
     max_pages: int = 50,
     progress_callback: Callable | None = None,
+    business_context: dict | None = None,
 ) -> dict:
     """
     Run the full audit pipeline:
     1. Crawl (or fetch single page)
     2. Run all audit tools on each page
     3. Aggregate results
-    Returns dict with 'aggregated' and 'pages' keys.
+    Returns dict with 'aggregated', 'pages', and 'business_context' keys.
 
     progress_callback(n: int) is called after each page is audited.
     Used by web/Trigger.dev mode to report live progress. CLI passes None.
+
+    business_context (optional): dict with keys:
+        business_type (str): e.g. "photo booth rental"
+        locations (list[str]): e.g. ["San Diego, CA", "Austin, TX"]
+        target_keywords (list[str]): e.g. ["photo booth rental San Diego"]
     """
+    google_clients = build_google_clients()
+    tool_config = {**google_clients, "business_context": business_context or {}}
+
     if single_page:
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
             resp = await client.get(url)
@@ -115,13 +168,13 @@ async def run_audit(
     # Run audit tools on each page
     all_results: dict[str, list[dict]] = {}
     for page in pages:
-        page_results = audit_page(page["url"], page["html"], page.get("headers"))
+        page_results = audit_page(page["url"], page["html"], page.get("headers"), config=tool_config)
         all_results[page["url"]] = page_results
         if progress_callback:
             progress_callback(len(all_results))
 
     aggregated = aggregate(all_results)
-    return {"aggregated": aggregated, "pages": pages}
+    return {"aggregated": aggregated, "pages": pages, "business_context": business_context or {}}
 
 
 def save_audit_data(aggregated: dict, analysis_result: dict, domain: str):
@@ -233,17 +286,32 @@ def main(args=None):
     url = validate_url(parsed.url)
     domain = extract_domain(url)
 
+    business_context = {}
+    if parsed.business_type:
+        business_context["business_type"] = parsed.business_type
+    if parsed.locations:
+        business_context["locations"] = parsed.locations
+    if parsed.target_keywords:
+        business_context["target_keywords"] = parsed.target_keywords
+
     print(f"Starting audit of {domain}...")
+    if business_context:
+        print(f"Business context: {business_context}")
 
     # Step 1: Crawl + Audit
-    result = asyncio.run(run_audit(url, single_page=parsed.single_page, max_pages=parsed.max_pages))
+    result = asyncio.run(run_audit(
+        url,
+        single_page=parsed.single_page,
+        max_pages=parsed.max_pages,
+        business_context=business_context or None,
+    ))
     aggregated = result["aggregated"]
     pages = result["pages"]
 
     print(f"Audited {aggregated['pages_audited']} pages. Site score: {aggregated['site_score']}/100")
 
     # Step 2: Format for AI analysis
-    analysis_result = format_for_analysis(aggregated, domain)
+    analysis_result = format_for_analysis(aggregated, domain, business_context=business_context or None)
     print("\n" + analysis_result["prompt"])
 
     # Step 3: Save audit data, load AI analysis from best available source
