@@ -921,7 +921,7 @@
     // ─── Section visibility ──────────────────────────────
     function showSection(id) {
       ['section-idle','section-progress','section-error','section-results'].forEach(s => {
-        document.getElementById(s).style.display = s === id ? '' : 'none';
+        document.getElementById(s).style.display = s === id ? 'block' : 'none';
       });
     }
 
