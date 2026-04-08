@@ -7,9 +7,9 @@
  * The client polls /api/status/:runId to track progress.
  */
 
-import { tasks } from "@trigger.dev/sdk/v3";
+const { tasks } = require("@trigger.dev/sdk/v3");
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -32,4 +32,4 @@ export default async function handler(req, res) {
     console.error("Failed to trigger audit task:", err);
     return res.status(500).json({ error: "Failed to start audit", detail: err.message });
   }
-}
+};

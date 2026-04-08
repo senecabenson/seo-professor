@@ -1,7 +1,9 @@
-FROM python:3.11-slim
+FROM node:20-slim
 
-# WeasyPrint system dependencies (Pango, Cairo, GDK-Pixbuf)
+# Install Python and WeasyPrint system dependencies
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libpangocairo-1.0-0 \
@@ -14,4 +16,4 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 COPY . .
-RUN pip install --no-cache-dir -e .
+RUN pip3 install --no-cache-dir -e . --break-system-packages

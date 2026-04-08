@@ -1,9 +1,11 @@
 import { defineConfig } from "@trigger.dev/sdk/v3";
 
 export default defineConfig({
-  // Find this in your Trigger.dev dashboard → Project Settings → Project Ref
   project: "proj_xdhswbiabwvujqcdztkh",
   dirs: ["./trigger"],
+  build: {
+    dockerfile: "Dockerfile.trigger",
+  },
   retries: {
     enabledInDev: false,
     default: {
