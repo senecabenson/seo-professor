@@ -71,9 +71,9 @@ def audit(url: str, html: str, config: dict | None = None) -> AuditResult
 
 Use `make_result()` to construct results and `validate_result()` to verify structure. New tools plug in by following this contract and adding themselves to `AUDIT_TOOLS` in `src/audit.py`.
 
-### 10 Audit Tools
+### 12 Audit Tools
 
-`onpage_auditor` · `indexation_auditor` · `link_auditor` · `image_auditor` · `security_auditor` · `cwv_auditor` · `js_render_auditor` · `structured_data_auditor` · `authority_auditor` · `aeo_auditor`
+`onpage_auditor` · `indexation_auditor` · `link_auditor` · `image_auditor` · `security_auditor` · `cwv_auditor` · `js_render_auditor` · `structured_data_auditor` · `authority_auditor` · `aeo_auditor` · `gsc_auditor` · `ga_auditor`
 
 ### Database
 
