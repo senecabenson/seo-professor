@@ -6,19 +6,8 @@ const pythonExtension = {
     context.addLayer({
       id: "python-system-deps",
       image: {
-        pkgs: [
-          "python3",
-          "python3-pip",
-          "libpango-1.0-0",
-          "libpangoft2-1.0-0",
-          "libpangocairo-1.0-0",
-          "libcairo2",
-          "libgdk-pixbuf2.0-0",
-          "libffi-dev",
-          "shared-mime-info",
-          "fonts-liberation",
-        ],
         instructions: [
+          "RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-pip libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info fonts-liberation && rm -rf /var/lib/apt/lists/*",
           "RUN pip3 install --no-cache-dir --break-system-packages anthropic weasyprint supabase httpx beautifulsoup4 lxml jinja2 python-dotenv google-api-python-client google-auth google-analytics-data",
         ],
       },
