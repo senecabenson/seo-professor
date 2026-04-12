@@ -1,10 +1,36 @@
 import { defineConfig } from "@trigger.dev/sdk";
 
+const pythonExtension = {
+  name: "python-deps",
+  onBuildStart: async (context: any) => {
+    context.addLayer({
+      id: "python-system-deps",
+      image: {
+        pkgs: [
+          "python3",
+          "python3-pip",
+          "libpango-1.0-0",
+          "libpangoft2-1.0-0",
+          "libpangocairo-1.0-0",
+          "libcairo2",
+          "libgdk-pixbuf2.0-0",
+          "libffi-dev",
+          "shared-mime-info",
+          "fonts-liberation",
+        ],
+        instructions: [
+          "RUN pip3 install --no-cache-dir --break-system-packages anthropic weasyprint supabase httpx beautifulsoup4 lxml jinja2 python-dotenv google-api-python-client google-auth google-analytics-data",
+        ],
+      },
+    });
+  },
+};
+
 export default defineConfig({
   project: "proj_xdhswbiabwvujqcdztkh",
   dirs: ["./trigger"],
   build: {
-    dockerfile: "Dockerfile.trigger",
+    extensions: [pythonExtension],
   },
   maxDuration: 3600,
   retries: {
