@@ -11,7 +11,7 @@
  *   SUPABASE_KEY
  */
 
-import { task, logger } from "@trigger.dev/sdk/v3";
+import { task, logger } from "@trigger.dev/sdk";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
