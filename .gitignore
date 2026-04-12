@@ -1,5 +1,6 @@
 # Environment & secrets
 .env
+.env.*
 credentials.json
 *tokens*.json
 
@@ -32,3 +33,4 @@ Thumbs.db
 
 # Data (large files)
 *.db-journal
+.vercel
