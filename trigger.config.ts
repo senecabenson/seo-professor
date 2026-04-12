@@ -18,6 +18,7 @@ const pythonExtension = {
 export default defineConfig({
   project: "proj_xdhswbiabwvujqcdztkh",
   dirs: ["./trigger"],
+  compatibilityFlags: ["run_engine_v2"],
   build: {
     extensions: [pythonExtension],
   },
